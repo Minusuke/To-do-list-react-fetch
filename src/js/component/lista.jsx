@@ -2,137 +2,91 @@ import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faTrashAlt } from "@fortawesome/free-solid-svg-icons";
 import { faIconName } from "@fortawesome/free-solid-svg-icons";
 import React, { useState, useEffect } from "react";
+import { Modal } from "./modal.jsx";
+import { ModalEditar } from "./modalEditar.jsx";
+import { ModalEliminar } from "./modalEliminar.jsx";
+import { ModalEliminarTodas } from "./modalEliminarTodas.jsx";
+import { ModalEditarTodas } from "./modalEditarTodas.jsx";
+import { ModalAgregarTodas } from "./modalAgregarTodas.jsx";
+import { ModalAgregar } from "./modalAgregar.jsx";
+import { ModalEliminarUsuario } from "./modalEliminarUsuario.jsx";
+import { ModalEditarUsuario } from "./modalEditarUsuario.jsx";
+import { ModalAgregarUsuario } from "./modalAgregarUsuario.jsx";
+import { ModalAgregarUsuarioTodas } from "./modalAgregarUsuarioTodas.jsx";
+import { ModalEditarUsuarioTodas } from "./modalEditarUsuarioTodas.jsx";
+import { ModalEliminarUsuarioTodas } from "./modalEliminarUsuarioTodas.jsx";
+import { ModalEliminarTodasTodas } from "./modalEliminarTodasTodas.jsx";
+import { ModalEditarTodasTodas } from "./modalEditarTodasTodas.jsx";
+import { ModalAgregarTodasTodas } from "./modalAgregarTodasTodas.jsx";
 
-const Lista = () => {
-  const [inputValue, setInputValue] = useState("");
-  const [tareas, setTareas] = useState([]);
+const express = require("express");
+const bodyParser = require("body-parser");
 
-  useEffect(() => {
-    iniciar();
-  }, []);
+const app = express();
+const port = process.env.PORT || 3000;
 
-  const obtenerLista = () => {
-    fetch("https://playground.4geeks.com/apis/fake/todos/titoshiro")
-      .then((response) => response.json())
-      .then((data) => {
-        console.log(data);
-        setTareas(data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
+app.use(bodyParser.json());
 
-  const iniciar = () => {
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/titoshiro", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify([]),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Lista guardada exitosamente:", data);
-        obtenerLista();
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
+// Almacenamiento temporal de las tareas (puedes reemplazar esto con una base de datos)
+let tasks = [];
 
-  const guardarListaTareas = () => {
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/titoshiro", {
-      method: "PUT",
-      headers: {
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify(tareas),
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Lista guardada exitosamente:", data);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
+// 1. Get list of todo's for a particular user
+app.get(
+  "https://playground.4geeks.com/apis/fake/todos/user/Minusuke",
+  (req, res) => {
+    const username = req.params.username;
+    const userTasks = tasks.filter((task) => task.username === username);
+    res.json(userTasks);
+  }
+);
 
-  const eliminarListaTareas = () => {
-    fetch("https://playground.4geeks.com/apis/fake/todos/user/titoshiro", {
-      method: "DELETE",
-    })
-      .then((response) => response.json())
-      .then((data) => {
-        console.log("Lista eliminada exitosamente:", data);
-        setTareas([]);
-      })
-      .catch((error) => {
-        console.log(error);
-      });
-  };
+// 2. Create a new todo list of a particular user
+app.post(
+  "https://playground.4geeks.com/apis/fake/todos/user/Minusuke",
+  (req, res) => {
+    const username = req.params.username;
+    const newUserTasks = req.body;
 
-  const crearTarea = () => {
-    const nuevaTarea = { label: inputValue, done: false };
-    setTareas([...tareas, nuevaTarea]);
-    setInputValue("");
-  };
+    // Guardar las tareas en el almacenamiento temporal
+    tasks.push({ username, tasks: newUserTasks });
 
-  const eliminarTarea = (index) => {
-    const nuevasTareas = [...tareas];
-    nuevasTareas.splice(index, 1);
-    setTareas(nuevasTareas);
-  };
+    res.json({ result: "ok" });
+  }
+);
 
-  return (
-    <div>
-      <ul className="list-group m-5">
-        <li className="list-group-item">
-          <input
-            onChange={(e) => setInputValue(e.target.value)}
-            value={inputValue}
-            onKeyPress={(e) => {
-              if (e.key === "Enter") {
-                crearTarea();
-              }
-            }}
-            type="text"
-            className="form-control"
-            placeholder="¿Qué nueva tarea tengo que hacer?"
-          />
-        </li>
-        {tareas.map((item, index) => {
-          return (
-            <li className="list-group-item" key={index}>
-              {item.label}
-              <FontAwesomeIcon
-                className="float-end"
-                icon={faTrashAlt}
-                onClick={() => eliminarTarea(index)}
-              />
-            </li>
-          );
-        })}
-        <li
-          className="list-group-item disabled text-center"
-          aria-disabled="true"
-        >
-          {tareas.length} Tareas por hacer.
-        </li>
-      </ul>
-      <div className="text-center">
-        <button
-          onClick={guardarListaTareas}
-          className="btn btn-primary text-center"
-        >
-          Guardar Lista de Tareas
-        </button>
-        <button onClick={eliminarListaTareas} className="btn btn-danger">
-          Eliminar Lista de Tareas
-        </button>
-      </div>
-    </div>
-  );
-};
+// 3. Update the entire list of todo's of a particular user
+app.put(
+  "https://playground.4geeks.com/apis/fake/todos/user/Minusuke",
+  (req, res) => {
+    const username = req.params.username;
+    const updatedTasks = req.body;
 
+    // Actualizar las tareas en el almacenamiento temporal
+    tasks = tasks.map((task) =>
+      task.username === username ? { username, tasks: updatedTasks } : task
+    );
+
+    res.json({
+      result: `A list with ${updatedTasks.length} todos was successfully saved`,
+    });
+  }
+);
+
+// 4. Delete a user and all of their todo's
+app.delete(
+  "https://playground.4geeks.com/apis/fake/todos/user/Minusuke",
+  (req, res) => {
+    const username = req.params.username;
+
+    // Eliminar al usuario y sus tareas del almacenamiento temporal
+    tasks = tasks.filter((task) => task.username !== username);
+
+    res.json({ result: "ok" });
+  }
+);
+
+// Iniciar el servidor
+app.listen(port, () => {
+  console.log(`Servidor en ejecución en el puerto ${port}`);
+});
 export { Lista };
